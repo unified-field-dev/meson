@@ -126,8 +126,9 @@ mod tests {
     use super::*;
     use crate::LocalDiskBlobStore;
 
-    #[test]
-    fn install_and_clear_available_round_trip() {
+    #[tokio::test]
+    async fn install_and_clear_available_round_trip() {
+        let _g = blob_stores_unit_test_lock().await;
         clear_blob_stores_for_test();
         assert!(matches!(
             installed_blob_store(),
@@ -142,8 +143,9 @@ mod tests {
         ));
     }
 
-    #[test]
-    fn install_and_clear_quarantine_round_trip() {
+    #[tokio::test]
+    async fn install_and_clear_quarantine_round_trip() {
+        let _g = blob_stores_unit_test_lock().await;
         clear_blob_stores_for_test();
         assert!(matches!(
             installed_quarantine_store(),
