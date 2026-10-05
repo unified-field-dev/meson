@@ -14,7 +14,8 @@
 //!   codegen). [Get started](#opt-in-file-trait)
 //! - **File upload** — Put bytes and create a File row in one call via
 //!   [`FileUpload::create_with_bytes`] (System Valence; File create stays
-//!   `SYSTEM_ONLY`). [Get started](#upload-file-bytes)
+//!   `SYSTEM_ONLY`). With scanning on, the row starts `PendingVirusScan` and
+//!   Meson enqueues its scan. [Get started](#upload-file-bytes)
 //! - **File bytes** — Load opaque bytes from a File row with
 //!   [`FileBytes::get_file_bytes`] after a session get. [Get started](#load-file-bytes)
 //! - **Blob store** — Process-wide [`install_blob_store`] so File helpers resolve
@@ -34,9 +35,12 @@
 //!   quarantine-first upload when scan is on, [`promote_to_available`] after a
 //!   clean scan. Opt out with `MESON_VIRUS_SCAN=off`.
 //!   [Get started](#install-dual-blob-stores)
-//! - **Virus scan enqueue** — After a Pending upload, call
-//!   [`enqueue_virus_scan`] so Boson runs `meson_virus_scan`.
-//!   [Get started](#enqueue-a-virus-scan)
+//! - **Scan adapters** — Each product File table registers a
+//!   [`FileScanAdapter`] so the scan task can load the row and commit its
+//!   verdict. [Get started](#register-a-scan-adapter)
+//! - **Virus scan enqueue** — Uploads enqueue their own scan. Call
+//!   [`enqueue_virus_scan`] to start one again for a row that is still
+//!   Pending. [Get started](#enqueue-a-virus-scan)
 //! - **File readiness** — [`wait_until_available`] / [`get_available_file_bytes`]
 //!   gate processors on Available (never quarantine bytes).
 //!   [Get started](#wait-until-file-available)
@@ -124,19 +128,28 @@
 //! # Upload file bytes
 //!
 //! [`FileUpload::create_with_bytes`] generates a flat `{uuid}.{ext}` key, puts
-//! bytes on the installed store, then creates the Valence File row (`Available`,
-//! size, `uploaded_at`). File create stays `SYSTEM_ONLY` — pass System Valence
-//! from the host upload path. Session actors stay on the load path.
+//! bytes on the installed store, then creates the Valence File row (size,
+//! `uploaded_at`, scan status). File create stays `SYSTEM_ONLY` — pass System
+//! Valence from the host upload path. Session actors stay on the load path.
 //!
-//! Prerequisites: [`install_blob_store`]; a File model that implements
-//! [`FileUpload`] (teaching type [`ReceiptScan`], or your schema's `from_stored_file`).
+//! Scanning is on unless `MESON_VIRUS_SCAN=off`. With it on, the bytes go to the
+//! quarantine store, the row starts `PendingVirusScan`, and Meson enqueues
+//! `meson_virus_scan` for it. Readers wait for Available
+//! ([Wait until File Available](#wait-until-file-available)). With it off, the
+//! row is `Available` right away and nothing is enqueued.
 //!
-//! 1. Install the blob store at boot.
+//! Prerequisites: [`install_blob_store`] (plus [`install_quarantine_store`] when
+//! scanning is on); a File model that implements [`FileUpload`] (teaching type
+//! [`ReceiptScan`], or your schema's `from_stored_file`); a registered
+//! [scan adapter](#register-a-scan-adapter) and a configured Boson runtime for
+//! the scan to start.
+//!
+//! 1. Install the blob stores at boot.
 //! 2. Under System Valence, call `create_with_bytes` with [`FileCreateMeta`] and bytes.
 //! 3. Keep the returned row id for later session load.
 //!
 //! ```rust,ignore
-//! use meson::{FileCreateMeta, FileUpload, ReceiptScan};
+//! use meson::{FileCreateMeta, FileFileStatus, FileUpload, ReceiptScan};
 //! use valence::RecordId;
 //!
 //! async fn add_receipt(
@@ -156,14 +169,20 @@
 //!     )
 //!     .await?;
 //!     assert!(created.id().is_some());
+//!     // Scanning is on, so the row waits for the scan Meson just enqueued.
+//!     assert_eq!(created.file_status(), &FileFileStatus::PendingVirusScan);
 //!     Ok(created)
 //! }
 //! ```
 //!
-//! On success the row is persisted and bytes are readable via
-//! [`FileBytes::get_file_bytes`]. Invalid extensions return
-//! [`FileUploadError::InvalidExtension`]. When put succeeds and Valence create
-//! fails, the blob may remain (orphan).
+//! On success the row is persisted. With scanning off the bytes are readable
+//! via [`FileBytes::get_file_bytes`] at once; with it on, read them through
+//! [`get_available_file_bytes`] after the scan marks the row Available.
+//! Invalid extensions return [`FileUploadError::InvalidExtension`]. When put
+//! succeeds and Valence create fails, the blob may remain (orphan). If the scan
+//! can't be enqueued (no Boson, no adapter), create still succeeds and the row
+//! stays Pending; Meson logs `outcome="scan_enqueue_failed"` or
+//! `outcome="no_scan_adapter"` under target `meson.file_upload`.
 //!
 //! **Next:** [Load file bytes](#load-file-bytes). Runnable:
 //! `cargo run -p meson --example upload_and_load`.
@@ -327,7 +346,7 @@
 //! | `db-hybrid` | Valence hybrid backend feature |
 //! | `backend-local` (default) | [`LocalDiskBlobStore`] |
 //! | `backend-rustfs` | [`RustFsBlobStore`] (S3 path-style / RustFS) |
-//! | `scan-pipeline` | Boson task + Photon `meson.file.updated` |
+//! | `scan-pipeline` | Boson task + Photon `meson.file.updated`; Pending uploads enqueue their own scan |
 //! | `scan-chronon` | Chronon `meson_virus_scan_sweeper` |
 //! | `scanner-clamav` | ClamAV INSTREAM scanner (`ClamAvScanner`) |
 //!
@@ -360,25 +379,93 @@
 //! }
 //! ```
 //!
-//! **Next:** [Enqueue a virus scan](#enqueue-a-virus-scan) after Pending upload.
+//! **Next:** [Register a scan adapter](#register-a-scan-adapter) for each
+//! product File table.
+//!
+//! # Register a scan adapter
+//!
+//! The `meson_virus_scan` task only knows a File table by name. A
+//! [`FileScanAdapter`] tells it how to load that table's row and how to commit
+//! Available or Quarantined. Meson registers adapters for its own teaching
+//! tables; every product File table registers its own, once at boot, before
+//! the first upload. Uploads to a table with no adapter stay Pending and log
+//! `outcome="no_scan_adapter"`.
+//!
+//! Prerequisites: a File schema in your crate; Valence access the scan task's
+//! System actor can use for get and update on that table.
+//!
+//! 1. Implement [`FileScanAdapter`] for the table (load, commit Available,
+//!    commit Quarantined).
+//! 2. Call [`register_file_scan_adapter`] with the table name at host boot.
+//! 3. Confirm with [`load_file_for_scan`], which returns the row's
+//!    [`FileScanSnapshot`].
+//!
+//! ```rust,ignore
+//! use std::sync::Arc;
+//! use meson::{
+//!     load_file_for_scan, register_file_scan_adapter, FileScanAdapter,
+//!     FileScanAdapterError, FileScanSnapshot,
+//! };
+//! use valence::Valence;
+//!
+//! struct StatementFileAdapter;
+//!
+//! #[async_trait::async_trait]
+//! impl FileScanAdapter for StatementFileAdapter {
+//!     async fn load(&self, v: &Valence, id: &str) -> Result<FileScanSnapshot, FileScanAdapterError> {
+//!         /* get the row, copy storage_path / file_status / uploaded_by */
+//!     }
+//!     async fn commit_available(&self, v: &Valence, id: &str, path: String) -> Result<(), FileScanAdapterError> {
+//!         /* set storage_path = path and file_status = Available */
+//!     }
+//!     async fn commit_quarantined(&self, v: &Valence, id: &str) -> Result<(), FileScanAdapterError> {
+//!         /* set file_status = Quarantined */
+//!     }
+//! }
+//!
+//! fn boot() {
+//!     register_file_scan_adapter("statement_file", Arc::new(StatementFileAdapter));
+//! }
+//!
+//! async fn check(v: &Valence, id: &str) -> Result<(), FileScanAdapterError> {
+//!     let snap = load_file_for_scan(v, "statement_file", id).await?;
+//!     assert!(!snap.storage_path.is_empty());
+//!     Ok(())
+//! }
+//! ```
+//!
+//! On success the scan task finds the row and commits its verdict. A table with
+//! no adapter returns [`FileScanAdapterError::UnknownTable`]; a missing row
+//! returns [`FileScanAdapterError::NotFound`]. Registering the same table again
+//! replaces the earlier adapter.
+//!
+//! **Next:** [Wait until File Available](#wait-until-file-available) before
+//! reading bytes.
 //!
 //! # Enqueue a virus scan
 //!
-//! Quarantine upload creates `PendingVirusScan` rows. Call
-//! [`enqueue_virus_scan`] with the File table and bare id so Boson scans and
-//! publishes Photon `meson.file.updated`.
+//! Uploads through [`FileUpload::create_with_bytes`] and [`create_with_put`]
+//! enqueue their own scan. Call [`enqueue_virus_scan`] yourself to start a scan
+//! again for a row that is still `PendingVirusScan`, for example one created
+//! while Boson was down. The `meson_virus_scan_sweeper` Chronon script
+//! (`scan-chronon`) does the same for Pending rows older than `max_age_secs`
+//! (default 300) when a host runs it. Enqueueing twice is
+//! safe: both use the key `virus_scan:{table}:{id}`, and the task skips rows that
+//! already finished.
 //!
 //! ```rust,ignore
 //! use meson::enqueue_virus_scan;
 //!
-//! async fn after_upload(table: &str, bare_id: &str) -> Result<(), meson::EnqueueScanError> {
+//! async fn rescan(table: &str, bare_id: &str) -> Result<(), meson::EnqueueScanError> {
 //!     enqueue_virus_scan(table, bare_id).await?;
 //!     Ok(())
 //! }
 //! ```
 //!
-//! Requires the `scan-pipeline` (or `scan-boson`) feature and a configured Boson
-//! runtime on the host.
+//! On success Boson scans the row and publishes Photon `meson.file.updated`.
+//! Without a configured Boson runtime you get
+//! [`EnqueueScanError::BosonNotConfigured`]. Requires the `scan-pipeline` (or
+//! `scan-boson`) feature.
 //!
 //! # Wait until File Available
 //!
@@ -419,6 +506,7 @@ pub mod preview;
 pub mod promote;
 pub mod readiness;
 pub mod scan;
+mod scan_kickoff;
 pub mod virus_scan_config;
 
 #[cfg(feature = "photon")]

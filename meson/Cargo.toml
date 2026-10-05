@@ -72,6 +72,16 @@ scan-pipeline = ["scan-boson", "photon"]
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "time"] }
+boson-backend-mem = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[[test]]
+name = "scan_kickoff"
+required-features = ["backend-local", "scan-pipeline"]
+
+[[test]]
+name = "scan_kickoff_no_boson"
+required-features = ["backend-local", "scan-pipeline"]
 
 [build-dependencies]
 valence-codegen = { workspace = true }

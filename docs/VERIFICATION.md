@@ -18,6 +18,9 @@ cargo clippy -p meson --all-targets --features backend-local -- -D warnings
 cargo test -p meson --features backend-local
 cargo test -p meson --features "backend-local,scanner-clamav" --lib
 cargo test -p meson --features "backend-local,scan-pipeline" --test virus_scan_pipeline
+cargo test -p meson --features "backend-local,scan-pipeline" --test scan_kickoff --test scan_kickoff_no_boson
+cargo test -p meson --features "backend-local,scan-pipeline" --lib scan_kickoff
+cargo clippy -p meson --all-targets --features backend-local,scan-pipeline -- -D warnings
 cargo test -p meson-leptos --lib
 cargo run -p meson --example upload_and_load
 cargo doc -p meson --no-deps --features backend-local,backend-rustfs,scan-pipeline

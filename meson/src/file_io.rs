@@ -8,6 +8,7 @@
 use crate::backend::keys::validate_object_key;
 use crate::blob_install::{installed_blob_store, installed_quarantine_store};
 use crate::generated::{FileFields, FileFileStatus};
+use crate::scan_kickoff;
 use crate::virus_scan_config::virus_scan_enabled;
 use crate::FileStoreError;
 use async_trait::async_trait;
@@ -15,6 +16,7 @@ use chrono::{DateTime, Utc};
 use std::future::Future;
 use thiserror::Error;
 use uuid::Uuid;
+use valence::connection::IdHolder;
 use valence::{Model, RecordId, Valence};
 
 /// Caller-supplied metadata for [`FileUpload::create_with_bytes`].
@@ -211,6 +213,10 @@ pub trait FileUpload: Sized + Model + Send {
     /// Put `bytes`, then [`Model::create`] under `valence` (typically System —
     /// File create stays `SYSTEM_ONLY`).
     ///
+    /// When scanning is on the row starts `PendingVirusScan` and Meson enqueues
+    /// the `meson_virus_scan` Boson task for it (`scan-boson` feature). Enqueue
+    /// problems are logged and leave the row Pending; they never fail the create.
+    ///
     /// # Errors
     ///
     /// Returns install / extension / store errors before create. When put
@@ -220,7 +226,10 @@ pub trait FileUpload: Sized + Model + Send {
         valence: &Valence,
         meta: FileCreateMeta,
         bytes: &[u8],
-    ) -> Result<Self, FileUploadError> {
+    ) -> Result<Self, FileUploadError>
+    where
+        Self: IdHolder,
+    {
         let put = put_new_object(&meta.file_extension, bytes).await?;
         let size_bytes = put.size_bytes;
         let status = initial_file_status();
@@ -237,7 +246,14 @@ pub trait FileUpload: Sized + Model + Send {
                     file_status = status_label,
                     "file uploaded"
                 );
-                let _ = pending;
+                if pending {
+                    scan_kickoff::kick_off(
+                        "create_with_bytes",
+                        Self::table_name(),
+                        created.record_id(),
+                    )
+                    .await;
+                }
                 Ok(created)
             }
             Err(err) => {
@@ -272,6 +288,10 @@ pub async fn get_installed_object(storage_path: &str) -> Result<Vec<u8>, FileSto
 /// Prefer [`FileUpload::create_with_bytes`] when the model implements
 /// [`FileUpload`]. Use this for schemas with extra fields (profile FK, …).
 ///
+/// `build` receives the File status to store: `PendingVirusScan` when scanning
+/// is on, `Available` otherwise. Pending rows get the same automatic
+/// `meson_virus_scan` enqueue as [`FileUpload::create_with_bytes`].
+///
 /// # Errors
 ///
 /// Same classes as [`FileUpload::create_with_bytes`].
@@ -282,7 +302,7 @@ pub async fn create_with_put<M, F, Fut>(
     build: F,
 ) -> Result<M, FileUploadError>
 where
-    M: Model + Send,
+    M: Model + IdHolder + Send,
     F: FnOnce(FileCreateMeta, String, i64, FileFileStatus, DateTime<Utc>) -> Fut + Send,
     Fut: Future<Output = Result<M, FileUploadError>> + Send,
 {
@@ -302,7 +322,10 @@ where
                 file_status = status_label,
                 "file uploaded"
             );
-            let _ = pending;
+            if pending {
+                scan_kickoff::kick_off("create_with_put", M::table_name(), created.record_id())
+                    .await;
+            }
             Ok(created)
         }
         Err(err) => {

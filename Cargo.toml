@@ -115,6 +115,8 @@ anyhow = "1"
 boson-core = { git = "https://github.com/unified-field-dev/boson", branch = "main" }
 boson-macros = { git = "https://github.com/unified-field-dev/boson", branch = "main" }
 boson-runtime = { git = "https://github.com/unified-field-dev/boson", branch = "main", default-features = false }
+boson-backend-mem = { git = "https://github.com/unified-field-dev/boson", branch = "main" }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "std"] }
 boson-valence-identity = { git = "https://github.com/unified-field-dev/boson-valence-identity", branch = "main" }
 quark = { package = "uf-quark", git = "https://github.com/unified-field-dev/quark", branch = "main" }
 photon = { package = "uf-photon", git = "https://github.com/unified-field-dev/photon", branch = "main", default-features = false, features = ["runtime"] }

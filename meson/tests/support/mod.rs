@@ -42,6 +42,12 @@ pub fn peer_rid() -> RecordId {
 }
 
 pub async fn setup_valence() -> Valence {
+    setup_valence_with_router().await.0
+}
+
+/// Like [`setup_valence`], plus the router and default backend key so tests can
+/// build Boson execution-context factories over the same database.
+pub async fn setup_valence_with_router() -> (Valence, Arc<DatabaseRouter>, String) {
     valence::deletion::register_noop_deletion_dispatcher_for_tests();
     valence::clear_for_test();
     touch_schema_inventory();
@@ -66,9 +72,11 @@ pub async fn setup_valence() -> Valence {
         RegisterBackendLogicalNamesOptions::default(),
     );
 
+    let router = Arc::new(router);
+    let default_key = valence::router_key("default", SQLITE_ENGINE_ID);
     let valence = Valence::builder()
-        .database_router(Arc::new(router))
-        .default_backend_key(valence::router_key("default", SQLITE_ENGINE_ID))
+        .database_router(Arc::clone(&router))
+        .default_backend_key(default_key.clone())
         .with_actor(Actor::System {
             operation: "meson_test".to_string(),
         })
@@ -78,7 +86,7 @@ pub async fn setup_valence() -> Valence {
         .sync_typed_tables_from_registry()
         .await
         .expect("sync_typed_tables_from_registry");
-    valence
+    (valence, router, default_key)
 }
 
 pub fn as_user(base: &Valence, user_id: &str) -> Valence {

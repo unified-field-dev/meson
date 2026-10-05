@@ -24,6 +24,10 @@ jobs:
         run: cargo clippy -p meson --all-targets --features backend-local -- -D warnings
       - name: Test (local backend)
         run: cargo test -p meson --features backend-local
+      - name: Clippy (scan pipeline)
+        run: cargo clippy -p meson --all-targets --features backend-local,scan-pipeline -- -D warnings
+      - name: Test (scan pipeline)
+        run: cargo test -p meson --features backend-local,scan-pipeline
       - name: cargo doc
         run: cargo doc -p meson --no-deps --features backend-local
         env:
