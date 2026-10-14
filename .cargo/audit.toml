@@ -1,0 +1,7 @@
+[advisories]
+# 2026-10-14: RUSTSEC-2023-0071 (rsa, Marvin Attack timing sidechannel) has no
+# patched release upstream. rsa appears in Cargo.lock only through
+# sqlx-mysql (via valence's sqlx); `cargo tree` shows it is never compiled
+# into meson. Same ignore as valence. See BACKLOG
+# ammonia_rustsec_2021_0157_0158_01 and published_crates_advisory_gate_01.
+ignore = ["RUSTSEC-2023-0071"]
