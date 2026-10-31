@@ -3,12 +3,6 @@
 version = 4
 
 [[package]]
-name = "adler2"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
-
-[[package]]
 name = "aead"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -49,9 +43,9 @@ checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 
 [[package]]
 name = "ammonia"
-version = "4.2.3"
+version = "4.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "061e83b03c2681c18a6787d956e355c74e0b98ba7ba3d69b0822ade1e6f1d716"
+checksum = "1f45dfa685e1ec33b1bf1a3b93b8047cbdbef41b6040deebbe6bea7720a45574"
 dependencies = [
  "cssparser 0.38.0",
  "html5ever",
@@ -93,15 +87,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cab112f0a86d568ea0e627cc1d6be74a1e9cd55214684db5561995f6dad897c6"
 dependencies = [
  "num-traits",
-]
-
-[[package]]
-name = "arbitrary"
-version = "1.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1"
-dependencies = [
- "derive_arbitrary",
 ]
 
 [[package]]
@@ -967,17 +952,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "derive_arbitrary"
-version = "1.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e567bd82dcff979e4b03460c307b3cdc9e96fde3d73bed1496d2bc75d9dd62a"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
-
-[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1080,7 +1054,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -1132,8 +1106,7 @@ version = "1.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e634e2e0ebac1ee034020da1ca582e17ffe4e0f5e985823721e168928136dcb"
 dependencies = [
- "crc32fast",
- "miniz_oxide",
+ "zlib-rs",
 ]
 
 [[package]]
@@ -2509,16 +2482,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 
 [[package]]
-name = "miniz_oxide"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b63fbc4a50860e98e7b2aa7804ded1db5cbc3aff9193adaff57a6931bf7c4b4c"
-dependencies = [
- "adler2",
- "simd-adler32",
-]
-
-[[package]]
 name = "mio"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2584,6 +2547,18 @@ name = "next_tuple"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60993920e071b0c9b66f14e2b32740a4e27ffc82854dcd72035887f336a09a28"
+
+[[package]]
+name = "nix"
+version = "0.31.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf20d2fde8ff38632c426f1165ed7436270b44f199fc55284c38276f9db47c3d"
+dependencies = [
+ "bitflags",
+ "cfg-if",
+ "cfg_aliases",
+ "libc",
+]
 
 [[package]]
 name = "nom"
@@ -2686,7 +2661,7 @@ checksum = "8c04f5d74368e4d0dfe06c45c8627c81bd7c317d52762d118fb9b3076f6420fd"
 [[package]]
 name = "orbital-base-components"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "chrono",
  "icondata",
@@ -2709,7 +2684,7 @@ dependencies = [
 [[package]]
 name = "orbital-charts"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "bitflags",
  "chrono",
@@ -2734,7 +2709,7 @@ dependencies = [
 [[package]]
 name = "orbital-core-components"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "chrono",
  "icondata",
@@ -2757,7 +2732,7 @@ dependencies = [
 [[package]]
 name = "orbital-data"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "chrono",
  "serde",
@@ -2766,7 +2741,7 @@ dependencies = [
 [[package]]
 name = "orbital-datatable"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "bitflags",
  "chrono",
@@ -2793,7 +2768,7 @@ dependencies = [
 [[package]]
 name = "orbital-date-pickers"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "bitflags",
  "chrono",
@@ -2814,7 +2789,7 @@ dependencies = [
 [[package]]
 name = "orbital-discussion"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "ammonia",
  "bitflags",
@@ -2840,7 +2815,7 @@ dependencies = [
 [[package]]
 name = "orbital-history"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "bitflags",
  "chrono",
@@ -2866,7 +2841,7 @@ dependencies = [
 [[package]]
 name = "orbital-macros"
 version = "0.1.5"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "darling",
  "proc-macro2",
@@ -2877,7 +2852,7 @@ dependencies = [
 [[package]]
 name = "orbital-markdown"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "ammonia",
  "pulldown-cmark",
@@ -2887,7 +2862,7 @@ dependencies = [
 [[package]]
 name = "orbital-motion"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "icondata",
  "icondata_core",
@@ -2907,7 +2882,7 @@ dependencies = [
 [[package]]
 name = "orbital-paging"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "leptos",
  "leptos-use",
@@ -2918,7 +2893,7 @@ dependencies = [
 [[package]]
 name = "orbital-primitives"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "icondata",
  "icondata_core",
@@ -2943,7 +2918,7 @@ dependencies = [
 [[package]]
 name = "orbital-scheduler"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "bitflags",
  "chrono",
@@ -2968,7 +2943,7 @@ dependencies = [
 [[package]]
 name = "orbital-style"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "cfg-if",
  "leptos",
@@ -2979,7 +2954,7 @@ dependencies = [
 [[package]]
 name = "orbital-theme"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "getset",
  "leptos",
@@ -2991,7 +2966,7 @@ dependencies = [
 [[package]]
 name = "orbital-tree"
 version = "0.1.4"
-source = "git+https://github.com/unified-field-dev/orbital?branch=main#2277aa35d8f7fa08a958df155cc8fbba33517f1c"
+source = "git+https://github.com/unified-field-dev/orbital?branch=main#117636043716a8e407090b3699b048a96929797b"
 dependencies = [
  "icondata_core",
  "inventory",
@@ -3578,7 +3553,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3971,7 +3946,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -4000,9 +3975,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-webpki"
-version = "0.103.15"
+version = "0.103.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3c3cf1d8b1e7d4927e2d154c3fcb02979afb9939629c62cd9048d4f07b60ac2"
+checksum = "4443b1b6d39d7c663139942cc4558262562d2c84123bb6282ef177009ca8b281"
 dependencies = [
  "ring",
  "rustls-pki-types",
@@ -4679,10 +4654,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.3.4",
+ "getrandom 0.4.3",
  "once_cell",
  "rustix",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -4770,9 +4745,9 @@ checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
 
 [[package]]
 name = "tokio"
-version = "1.53.1"
+version = "1.54.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "202caea871b69668250d242070849eb495be178ed697a3e98aebce5bc81a0bed"
+checksum = "b52fd3255258d26fac7264ab5a76b53c13367136dc011d3d6ad4f8ed070396a3"
 dependencies = [
  "bytes",
  "libc",
@@ -5100,6 +5075,12 @@ dependencies = [
  "quote",
  "syn 2.0.119",
 ]
+
+[[package]]
+name = "typed-path"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ce898823d8cd0f028662d2f349694b1af0a5cc9be83f1d213a00d3147445e1e"
 
 [[package]]
 name = "typenum"
@@ -5583,9 +5564,9 @@ dependencies = [
 
 [[package]]
 name = "webpki-roots"
-version = "1.0.9"
+version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7dcd9d09a39985f5344844e66b0c530a33843579125f23e21e9f0f220850f22a"
+checksum = "f5f280bbb2b287bc8e7de7e3852945a0ff50d1bbcb5ed42b6c7a568c546df171"
 dependencies = [
  "rustls-pki-types",
 ]
@@ -5606,7 +5587,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -5963,20 +5944,26 @@ dependencies = [
 
 [[package]]
 name = "zip"
-version = "2.4.2"
+version = "9.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fabe6324e908f85a1c52063ce7aa26b68dcb7eb6dbc83a2d148403c9bc3eba50"
+checksum = "1156b39d142a34b999c2310a50455e0cb3760bf7efad0122f796d813bee26ccb"
 dependencies = [
- "arbitrary",
  "crc32fast",
- "crossbeam-utils",
- "displaydoc",
  "flate2",
+ "getrandom 0.4.3",
  "indexmap",
  "memchr",
- "thiserror 2.0.20",
+ "nix",
+ "typed-path",
+ "windows-sys 0.61.2",
  "zopfli",
 ]
+
+[[package]]
+name = "zlib-rs"
+version = "0.6.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b268e58e7c693d7c271f93ffc4ba3b380412554231c85bf61ca7af91042a4112"
 
 [[package]]
 name = "zmij"
