@@ -14,23 +14,8 @@ use support::{
 };
 use valence::{RecordId, RecordPredicate};
 
-fn rustfs_ready() -> bool {
-    std::env::var("MESON_RUSTFS_ENDPOINT").is_ok()
-        && std::env::var("MESON_RUSTFS_BUCKET").is_ok()
-        && std::env::var("MESON_RUSTFS_ACCESS_KEY").is_ok()
-        && std::env::var("MESON_RUSTFS_SECRET_KEY").is_ok()
-}
-
 fn require_or_skip(id: &str) -> bool {
-    if rustfs_ready() {
-        return true;
-    }
-    assert!(
-        std::env::var("MESON_RUSTFS_REQUIRED").ok().as_deref() != Some("1"),
-        "{id}: MESON_RUSTFS_* required"
-    );
-    eprintln!("skip {id}");
-    false
+    support::rustfs_available(id)
 }
 
 fn store() -> RustFsBlobStore {

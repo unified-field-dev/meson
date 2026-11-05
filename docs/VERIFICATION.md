@@ -42,6 +42,9 @@ cargo test -p meson --features backend-local,backend-rustfs -- --test-threads=1
 ```
 
 CI runs both `quality-local` and `quality-rustfs` (service container).
+Runners that cannot start the container (such as `tachyon-ci`) set
+`MESON_RUSTFS_ALLOW_UNREACHABLE=1`, which makes the RustFS tests skip when the
+endpoint does not accept a connection within about 10 s.
 
 ## Crate test coverage
 

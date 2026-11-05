@@ -148,3 +148,61 @@ pub async fn seed_profile_photo(
         .await
         .expect("upsert e2e_meson_profile_photo");
 }
+
+/// Decide whether a RustFS test should run, skip, or fail.
+///
+/// Returns `true` when the `MESON_RUSTFS_*` settings are present and the endpoint
+/// accepts a TCP connection (retried for about 10 s so a service container that is
+/// still starting is not mistaken for a missing one). Panics if the settings are
+/// missing and `MESON_RUSTFS_REQUIRED=1`; logs a skip and returns `false` if they are
+/// missing otherwise. If the endpoint is unreachable, skips (returns `false`) when
+/// `MESON_RUSTFS_ALLOW_UNREACHABLE=1`; otherwise returns `true` so the real
+/// connection error surfaces in the test.
+pub fn rustfs_available(scenario: &str) -> bool {
+    let var = |k: &str| std::env::var(k).ok();
+    let required = var("MESON_RUSTFS_REQUIRED").as_deref() == Some("1");
+    let configured = ["ENDPOINT", "BUCKET", "ACCESS_KEY", "SECRET_KEY"]
+        .iter()
+        .all(|k| var(&format!("MESON_RUSTFS_{k}")).is_some());
+    if !configured {
+        assert!(
+            !required,
+            "{scenario}: MESON_RUSTFS_* required (MESON_RUSTFS_REQUIRED=1)"
+        );
+        eprintln!("skip {scenario}: MESON_RUSTFS_* unset");
+        return false;
+    }
+    let endpoint = var("MESON_RUSTFS_ENDPOINT").expect("configured");
+    let addr = endpoint
+        .trim_start_matches("http://")
+        .trim_start_matches("https://")
+        .trim_end_matches('/')
+        .to_string();
+    let addr = if addr.contains(':') {
+        addr
+    } else if endpoint.starts_with("https://") {
+        format!("{addr}:443")
+    } else {
+        format!("{addr}:80")
+    };
+    for _ in 0..20 {
+        let reachable = std::net::ToSocketAddrs::to_socket_addrs(&addr)
+            .map(|mut it| {
+                it.any(|a| {
+                    std::net::TcpStream::connect_timeout(&a, std::time::Duration::from_millis(500))
+                        .is_ok()
+                })
+            })
+            .unwrap_or(false);
+        if reachable {
+            return true;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+    if var("MESON_RUSTFS_ALLOW_UNREACHABLE").as_deref() == Some("1") {
+        eprintln!("skip {scenario}: {endpoint} unreachable (MESON_RUSTFS_ALLOW_UNREACHABLE=1)");
+        return false;
+    }
+    // Unreachable and not allowed: run on so the real connection error surfaces.
+    true
+}

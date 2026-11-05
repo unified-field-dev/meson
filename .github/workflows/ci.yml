@@ -49,6 +49,8 @@ jobs:
       MESON_RUSTFS_ACCESS_KEY: mesonlabaccess
       MESON_RUSTFS_SECRET_KEY: mesonlabsecret
       MESON_RUSTFS_REQUIRED: "1"
+      # tachyon-ci does not start `services:` containers; skip instead of failing there.
+      MESON_RUSTFS_ALLOW_UNREACHABLE: "1"
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable

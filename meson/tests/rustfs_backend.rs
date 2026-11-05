@@ -5,25 +5,12 @@
 
 #![cfg(feature = "backend-rustfs")]
 
+mod support;
+
 use meson::{FileByteBackend, FileStoreError, RustFsBlobStore};
 
-fn rustfs_configured() -> bool {
-    std::env::var("MESON_RUSTFS_ENDPOINT").is_ok()
-        && std::env::var("MESON_RUSTFS_BUCKET").is_ok()
-        && std::env::var("MESON_RUSTFS_ACCESS_KEY").is_ok()
-        && std::env::var("MESON_RUSTFS_SECRET_KEY").is_ok()
-}
-
 fn require_or_skip(scenario: &str) -> bool {
-    if rustfs_configured() {
-        return true;
-    }
-    assert!(
-        std::env::var("MESON_RUSTFS_REQUIRED").ok().as_deref() != Some("1"),
-        "{scenario}: MESON_RUSTFS_* required (MESON_RUSTFS_REQUIRED=1)"
-    );
-    eprintln!("skip {scenario}: MESON_RUSTFS_* unset");
-    false
+    support::rustfs_available(scenario)
 }
 
 fn store_from_env() -> RustFsBlobStore {
